@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LEATCH settings</title>
+    <link rel="stylesheet" href="../pages/common.css" />
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="layout">
+      <nav class="sidebar">
+        <div class="logo"><img src="../icons/icon48.png" alt="" width="28" height="28" /> <strong>LEATCH</strong></div>
+        <a href="#account">Account &amp; server</a>
+        <a href="#languages">Languages</a>
+        <a href="#subtitles">Subtitles</a>
+        <a href="#vocab">Key words panel</a>
+        <a href="#study">Study pauses</a>
+        <a href="#pronunciation">Pronunciation</a>
+        <a href="#shortcuts">Shortcuts</a>
+        <a href="#about">AI &amp; data</a>
+        <a class="library-link" href="../library/library.html">Open my library →</a>
+      </nav>
+
+      <main class="content">
+        <header class="page-head">
+          <h1>Settings</h1>
+          <p class="muted">Changes save automatically and apply to open YouTube tabs right away.</p>
+        </header>
+
+        <section id="account" class="card">
+          <h2>Account &amp; server</h2>
+          <p class="muted">Your account keeps saved lessons (video link, subtitles, translations, key words), your word list, notes and watch progress.</p>
+          <div id="account-widget"></div>
+          <div class="server-row">
+            <label class="field">
+              LEATCH server URL
+              <input type="url" id="server-url" placeholder="http://localhost:4000" />
+              <small>Where your LEATCH backend runs. Default: http://localhost:4000</small>
+            </label>
+            <button class="btn" id="save-server" type="button">Save &amp; test</button>
+          </div>
+          <div id="server-status" class="hint"></div>
+        </section>
+
+        <section id="languages" class="card">
+          <h2>Languages</h2>
+          <div class="grid-2">
+            <label class="field">
+              I'm learning
+              <select data-setting="learningLang" data-options="study"></select>
+              <small>Vocabulary &amp; grammar support: Korean and English (more coming).</small>
+            </label>
+            <label class="field">
+              My native language
+              <select data-setting="nativeLang" data-options="languages"></select>
+            </label>
+            <label class="field">
+              Translate subtitles into
+              <select data-setting="translationLang" data-options="languages" data-empty="My native language (default)"></select>
+              <small>If the video is already in this language, LEATCH translates into the other language of your pair.</small>
+            </label>
+            <label class="field">
+              Translation source
+              <select data-setting="translationSource">
+                <option value="youtube">YouTube auto-translate (free)</option>
+                <option value="ai">LEATCH AI (better quality, uses AI tokens)</option>
+              </select>
+              <small>Human-made subtitles in your language are always preferred when the video has them.</small>
+            </label>
+            <label class="field">
+              Key words come from
+              <select data-setting="analysisEngine">
+                <option value="auto">Automatic — AI when logged in, else offline dictionary</option>
+                <option value="ai">AI (LEATCH server)</option>
+                <option value="local">Offline dictionary only (no tokens)</option>
+                <option value="off">Off (subtitles only)</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section id="subtitles" class="card">
+          <h2>Subtitles</h2>
+          <div class="preview" id="preview">
+            <div class="preview-video">
+              <div class="preview-subs" id="preview-subs">
+                <div class="preview-line preview-original">저는 한국에 <mark>가고 싶어요</mark></div>
+                <div class="preview-line preview-translation">I want to go to Korea.</div>
+              </div>
+            </div>
+          </div>
+          <div class="toggles">
+            <div class="toggle-row"><span>Show LEATCH subtitles</span><label class="switch"><input type="checkbox" data-setting="subtitles.show" /><span></span></label></div>
+            <div class="toggle-row"><span>Original sentence</span><label class="switch"><input type="checkbox" data-setting="subtitles.showOriginal" /><span></span></label></div>
+            <div class="toggle-row"><span>Translation</span><label class="switch"><input type="checkbox" data-setting="subtitles.showTranslation" /><span></span></label></div>
+            <div class="toggle-row"><span>Highlight key words in the sentence</span><label class="switch"><input type="checkbox" data-setting="subtitles.highlightVocab" /><span></span></label></div>
+            <div class="toggle-row"><span>Hide YouTube's own captions<small class="muted">Avoids double subtitles</small></span><label class="switch"><input type="checkbox" data-setting="subtitles.hideNativeCaptions" /><span></span></label></div>
+            <div class="toggle-row"><span>Join split lines into full sentences</span><label class="switch"><input type="checkbox" data-setting="subtitles.mergeSentences" /><span></span></label></div>
+          </div>
+          <div class="grid-3">
+            <label class="field">
+              Position
+              <select data-setting="subtitles.position">
+                <option value="bottom">Bottom</option>
+                <option value="top">Top</option>
+              </select>
+            </label>
+            <label class="field">
+              Distance from edge <output data-for="subtitles.offsetPercent" data-suffix="%"></output>
+              <input type="range" min="2" max="40" step="1" data-setting="subtitles.offsetPercent" />
+            </label>
+            <label class="field">
+              Font
+              <select data-setting="subtitles.fontFamily">
+                <option value="default">Sans (default)</option>
+                <option value="serif">Serif</option>
+                <option value="rounded">Rounded</option>
+                <option value="mono">Monospace</option>
+              </select>
+            </label>
+            <label class="field">
+              Original size <output data-for="subtitles.originalFontSize" data-suffix="px"></output>
+              <input type="range" min="14" max="60" step="1" data-setting="subtitles.originalFontSize" />
+            </label>
+            <label class="field">
+              Translation size <output data-for="subtitles.translationFontSize" data-suffix="px"></output>
+              <input type="range" min="12" max="48" step="1" data-setting="subtitles.translationFontSize" />
+            </label>
+            <label class="field">
+              Weight
+              <select data-setting="subtitles.fontWeight" data-type="number">
+                <option value="400">Regular</option>
+                <option value="500">Medium</option>
+                <option value="600">Semibold</option>
+                <option value="700">Bold</option>
+                <option value="800">Extra bold</option>
+              </select>
+            </label>
+            <label class="field color-field">
+              Original color
+              <input type="color" data-setting="subtitles.originalColor" />
+            </label>
+            <label class="field color-field">
+              Translation color
+              <input type="color" data-setting="subtitles.translationColor" />
+            </label>
+            <label class="field color-field">
+              Background
+              <input type="color" data-setting="subtitles.backgroundColor" />
+            </label>
+            <label class="field">
+              Background opacity <output data-for="subtitles.backgroundOpacity" data-scale="100" data-suffix="%"></output>
+              <input type="range" min="0" max="1" step="0.05" data-setting="subtitles.backgroundOpacity" />
+            </label>
+          </div>
+        </section>
+
+        <section id="vocab" class="card">
+          <h2>Key words panel</h2>
+          <p class="muted">While someone speaks, LEATCH shows the 1–2 most useful words or grammar points of that sentence — with meaning, pronunciation and two example sentences.</p>
+          <div class="toggles">
+            <div class="toggle-row"><span>Show the panel</span><label class="switch"><input type="checkbox" data-setting="vocab.show" /><span></span></label></div>
+            <div class="toggle-row"><span>Show example sentences</span><label class="switch"><input type="checkbox" data-setting="vocab.showExamples" /><span></span></label></div>
+            <div class="toggle-row"><span>Pronounce new key words automatically<small class="muted">Speaks over the video — best with slow content</small></span><label class="switch"><input type="checkbox" data-setting="vocab.autoSpeak" /><span></span></label></div>
+          </div>
+          <div class="grid-3">
+            <label class="field">
+              Items per sentence
+              <select data-setting="vocab.maxPerSentence" data-type="number">
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
+            </label>
+            <label class="field">
+              Position
+              <select data-setting="vocab.position">
+                <option value="top-right">Top right</option>
+                <option value="top-left">Top left</option>
+              </select>
+            </label>
+            <label class="field">
+              Size <output data-for="vocab.panelScale" data-scale="100" data-suffix="%"></output>
+              <input type="range" min="0.7" max="1.5" step="0.05" data-setting="vocab.panelScale" />
+            </label>
+            <label class="field">
+              Opacity <output data-for="vocab.opacity" data-scale="100" data-suffix="%"></output>
+              <input type="range" min="0.5" max="1" step="0.05" data-setting="vocab.opacity" />
+            </label>
+          </div>
+        </section>
+
+        <section id="study" class="card">
+          <h2>Study pauses</h2>
+          <p class="muted">When the video pauses, a study card shows the sentence in both languages, its key words and examples. Press play (or Space) to hide it and continue.</p>
+          <div class="toggles">
+            <div class="toggle-row"><span>Show the study card whenever I pause</span><label class="switch"><input type="checkbox" data-setting="study.showCardOnPause" /><span></span></label></div>
+            <div class="toggle-row"><span>Read the sentence aloud when the card opens</span><label class="switch"><input type="checkbox" data-setting="study.speakOnPause" /><span></span></label></div>
+          </div>
+          <div class="grid-3">
+            <label class="field">
+              Auto-pause
+              <select data-setting="study.autoPause">
+                <option value="off">Off</option>
+                <option value="sentence">Every N sentences</option>
+                <option value="interval">Every N seconds</option>
+              </select>
+              <small>Always pauses at the end of a sentence, never mid-word.</small>
+            </label>
+            <label class="field" data-show-when="study.autoPause=sentence">
+              Sentences between pauses
+              <input type="number" min="1" max="20" step="1" data-setting="study.everyNSentences" />
+            </label>
+            <label class="field" data-show-when="study.autoPause=interval">
+              Seconds between pauses
+              <input type="number" min="5" max="600" step="5" data-setting="study.intervalSeconds" />
+            </label>
+            <label class="field" data-show-when="study.autoPause=sentence|interval">
+              Resume automatically after <output data-for="study.autoResumeSeconds" data-suffix=" s"></output>
+              <input type="range" min="0" max="30" step="1" data-setting="study.autoResumeSeconds" />
+              <small>0 = wait for me to press play.</small>
+            </label>
+          </div>
+        </section>
+
+        <section id="pronunciation" class="card">
+          <h2>Pronunciation</h2>
+          <p class="muted">Uses your browser's built-in voices — free and offline. Chrome includes good Korean and English voices.</p>
+          <div class="grid-3">
+            <label class="field">
+              Voice
+              <select id="voice-select" data-setting="tts.voiceName"></select>
+            </label>
+            <label class="field">
+              Speed <output data-for="tts.rate" data-suffix="×"></output>
+              <input type="range" min="0.5" max="1.4" step="0.05" data-setting="tts.rate" />
+            </label>
+            <div class="field">
+              Try it
+              <button class="btn" id="test-voice" type="button">▶ Play sample</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="shortcuts" class="card">
+          <h2>Keyboard shortcuts</h2>
+          <div class="toggle-row"><span>Enable shortcuts on YouTube</span><label class="switch"><input type="checkbox" data-setting="shortcuts" /><span></span></label></div>
+          <table class="shortcut-table">
+            <tbody>
+              <tr><td><kbd>A</kbd></td><td>Previous sentence</td><td><kbd>D</kbd></td><td>Next sentence</td></tr>
+              <tr><td><kbd>S</kbd></td><td>Replay sentence (then pause)</td><td><kbd>Q</kbd></td><td>Cycle auto-pause modes</td></tr>
+              <tr><td><kbd>H</kbd></td><td>Show / hide subtitles</td><td><kbd>X</kbd></td><td>Show / hide translation</td></tr>
+              <tr><td><kbd>V</kbd></td><td>Show / hide key words panel</td><td><kbd>Space</kbd></td><td>Continue after a study pause</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="about" class="card">
+          <h2>AI &amp; data</h2>
+          <ul class="muted about-list">
+            <li><strong>Token-friendly by design:</strong> translations use YouTube's free auto-translate by default; AI only picks key words for the parts you actually watch, and every analysis is cached on your server and shared across all users — the same video section is never paid for twice.</li>
+            <li>Example sentences are generated once per word and reused for every future video.</li>
+            <li>Without login or AI, LEATCH uses a small built-in offline dictionary.</li>
+            <li>Settings sync with your Chrome profile; lessons, words and notes live on your LEATCH server.</li>
+          </ul>
+          <button class="btn btn-danger" id="reset" type="button">Reset all settings</button>
+        </section>
+      </main>
+    </div>
+
+    <script src="../src/shared/languages.js"></script>
+    <script src="../src/shared/settings.js"></script>
+    <script src="../src/shared/api-client.js"></script>
+    <script src="../src/content/ui/dom.js"></script>
+    <script src="../src/content/tts.js"></script>
+    <script src="../pages/form-bindings.js"></script>
+    <script src="../pages/account.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

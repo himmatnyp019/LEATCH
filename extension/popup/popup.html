@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>LEATCH</title>
+    <link rel="stylesheet" href="../pages/common.css" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="pop-head">
+      <img src="../icons/icon48.png" alt="" width="32" height="32" />
+      <div class="brand">
+        <strong>LEATCH</strong>
+        <span class="muted">Learn languages while you watch</span>
+      </div>
+      <label class="switch" title="Turn LEATCH on/off on YouTube">
+        <input type="checkbox" data-setting="enabled" aria-label="Enable LEATCH" />
+        <span></span>
+      </label>
+    </header>
+
+    <main class="pop-main">
+      <section class="card" id="account"></section>
+
+      <section class="card stack" id="quick-settings">
+        <div class="lang-pair">
+          <label class="field">
+            I'm learning
+            <select data-setting="learningLang" data-options="study" data-label="short"></select>
+          </label>
+          <button class="btn btn-icon" id="swap" type="button" title="Swap languages" aria-label="Swap languages"></button>
+          <label class="field">
+            My language
+            <select data-setting="nativeLang" data-options="languages" data-label="short"></select>
+          </label>
+        </div>
+        <label class="field">
+          Translate subtitles into
+          <select data-setting="translationLang" data-options="languages" data-empty="My language (default)" data-label="short"></select>
+        </label>
+        <label class="field">
+          Study auto-pause
+          <select id="auto-pause">
+            <option value="off">Off — only when I pause</option>
+            <option value="sentence:1">After every sentence</option>
+            <option value="sentence:3">Every 3 sentences</option>
+            <option value="interval:30">Every 30 seconds</option>
+            <option value="interval:60">Every 60 seconds</option>
+          </select>
+        </label>
+        <div class="toggle-row">
+          <span>Show translation</span>
+          <label class="switch"><input type="checkbox" data-setting="subtitles.showTranslation" /><span></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Key words panel</span>
+          <label class="switch"><input type="checkbox" data-setting="vocab.show" /><span></span></label>
+        </div>
+        <div class="toggle-row">
+          <span>Study card when I pause</span>
+          <label class="switch"><input type="checkbox" data-setting="study.showCardOnPause" /><span></span></label>
+        </div>
+      </section>
+    </main>
+
+    <footer class="pop-foot">
+      <button class="btn" id="open-library" type="button">My library</button>
+      <button class="btn" id="open-settings" type="button">All settings</button>
+    </footer>
+
+    <script src="../src/shared/languages.js"></script>
+    <script src="../src/shared/settings.js"></script>
+    <script src="../src/shared/api-client.js"></script>
+    <script src="../src/content/ui/dom.js"></script>
+    <script src="../pages/form-bindings.js"></script>
+    <script src="../pages/account.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

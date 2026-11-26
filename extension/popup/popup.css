@@ -1,0 +1,51 @@
+body {
+  width: 360px;
+}
+
+.pop-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 10px;
+}
+
+.pop-head .brand {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.pop-head .brand strong {
+  font-size: 16px;
+  letter-spacing: 0.06em;
+}
+
+.pop-head .brand span {
+  font-size: 12px;
+}
+
+.pop-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 12px;
+}
+
+.pop-main .card {
+  padding: 14px;
+}
+
+.lang-pair {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 6px;
+}
+
+.pop-foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px;
+}

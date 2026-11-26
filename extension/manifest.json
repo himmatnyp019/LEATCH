@@ -1,0 +1,77 @@
+{
+  "manifest_version": 3,
+  "name": "LEATCH — Learn languages while you watch",
+  "short_name": "LEATCH",
+  "version": "0.1.0",
+  "description": "Dual subtitles, key vocabulary & grammar with examples and pronunciation, and study pauses on YouTube.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "LEATCH",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "options_page": "options/options.html",
+  "background": {
+    "service_worker": "src/background/service-worker.js"
+  },
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "http://localhost:4000/*",
+    "http://127.0.0.1:4000/*"
+  ],
+  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": ["src/page/caption-hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "js": [
+        "src/shared/languages.js",
+        "src/shared/settings.js",
+        "src/content/runtime.js",
+        "src/content/bridge.js",
+        "src/content/player.js",
+        "src/content/caption-parser.js",
+        "src/content/cue-builder.js",
+        "src/content/caption-loader.js",
+        "src/content/analysis/korean.js",
+        "src/content/analysis/dictionary-ko.js",
+        "src/content/analysis/dictionary-en.js",
+        "src/content/analysis/local-analyzer.js",
+        "src/content/analysis/analysis-manager.js",
+        "src/content/tts.js",
+        "src/content/ui/dom.js",
+        "src/content/ui/vocab-card.js",
+        "src/content/ui/subtitle-view.js",
+        "src/content/ui/vocab-panel.js",
+        "src/content/ui/study-card.js",
+        "src/content/ui/toolbar.js",
+        "src/content/ui/overlay.js",
+        "src/content/lesson-sync.js",
+        "src/content/study-controller.js",
+        "src/content/session.js",
+        "src/content/main.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["src/content/ui/overlay.css"],
+      "matches": ["https://www.youtube.com/*"]
+    }
+  ]
+}

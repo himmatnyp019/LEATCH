@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LEATCH library</title>
+    <link rel="stylesheet" href="../pages/common.css" />
+    <link rel="stylesheet" href="library.css" />
+  </head>
+  <body>
+    <header class="lib-head">
+      <div class="lib-head-inner">
+        <a class="logo" href="#lessons"><img src="../icons/icon48.png" alt="" width="28" height="28" /> <strong>LEATCH</strong></a>
+        <nav class="segmented" id="tabs">
+          <button type="button" data-tab="lessons">Lessons</button>
+          <button type="button" data-tab="words">Words</button>
+        </nav>
+        <span class="spacer"></span>
+        <input type="search" id="search" placeholder="Search…" aria-label="Search" />
+        <a class="btn btn-sm" href="../options/options.html">Settings</a>
+      </div>
+    </header>
+
+    <main class="lib-main">
+      <section id="login-view" class="hidden">
+        <div class="card login-card">
+          <h2>Your study library</h2>
+          <div id="account-widget"></div>
+        </div>
+      </section>
+
+      <section id="lessons-view" class="hidden">
+        <div class="view-head">
+          <h1>Saved lessons</h1>
+          <span class="muted" id="lessons-count"></span>
+        </div>
+        <div id="lessons-grid" class="lessons-grid"></div>
+        <div class="pager"><button class="btn" id="lessons-more" type="button">Load more</button></div>
+      </section>
+
+      <section id="lesson-view" class="hidden"></section>
+
+      <section id="words-view" class="hidden">
+        <div class="view-head">
+          <h1>My words</h1>
+          <span class="muted" id="words-count"></span>
+          <span class="spacer"></span>
+          <select id="words-lang" aria-label="Language">
+            <option value="">All languages</option>
+          </select>
+          <div class="segmented" id="words-status">
+            <button type="button" data-status="">All</button>
+            <button type="button" data-status="new">New</button>
+            <button type="button" data-status="learning">Learning</button>
+            <button type="button" data-status="known">Known</button>
+          </div>
+          <button class="btn btn-sm" id="export-csv" type="button">Export CSV</button>
+        </div>
+        <div id="words-list" class="words-list"></div>
+        <div class="pager"><button class="btn" id="words-more" type="button">Load more</button></div>
+      </section>
+    </main>
+
+    <script src="../src/shared/languages.js"></script>
+    <script src="../src/shared/settings.js"></script>
+    <script src="../src/shared/api-client.js"></script>
+    <script src="../src/content/ui/dom.js"></script>
+    <script src="../src/content/tts.js"></script>
+    <script src="../pages/account.js"></script>
+    <script src="library.js"></script>
+  </body>
+</html>

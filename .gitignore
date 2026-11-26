@@ -1,0 +1,7 @@
+node_modules/
+.env
+*.log
+.DS_Store
+coverage/
+test-results/
+extension/tests/e2e/output/

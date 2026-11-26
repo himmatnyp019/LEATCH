@@ -1,0 +1,16 @@
+{
+  "name": "leatch-extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LEATCH Chrome extension (load the extension/ folder unpacked; no build step).",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "test:e2e": "node tests/e2e/run-e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.50.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
