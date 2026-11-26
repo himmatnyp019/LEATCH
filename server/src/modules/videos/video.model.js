@@ -44,6 +44,10 @@ const videoSchema = new Schema(
     cues: [cueSchema],
     vocab: [vocabItemSchema],
     notes: [noteSchema],
+    // Denormalised counts so the library list never has to load the heavy arrays.
+    cueCount: { type: Number, default: 0 },
+    vocabCount: { type: Number, default: 0 },
+    noteCount: { type: Number, default: 0 },
     progress: {
       position: { type: Number, default: 0 },
       duration: { type: Number, default: 0 },
@@ -65,5 +69,11 @@ const videoSchema = new Schema(
 
 videoSchema.index({ user: 1, videoId: 1 }, { unique: true })
 videoSchema.index({ user: 1, 'progress.lastWatchedAt': -1 })
+
+videoSchema.pre('save', function syncCounts() {
+  this.cueCount = this.cues.length
+  this.vocabCount = this.vocab.length
+  this.noteCount = this.notes.length
+})
 
 export default mongoose.model('Video', videoSchema)

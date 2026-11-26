@@ -1,3 +1,5 @@
+import mongoose from 'mongoose'
+
 import { env } from '../../config/env.js'
 import { ApiError } from '../../utils/ApiError.js'
 import { utcDay } from '../../utils/hash.js'
@@ -17,13 +19,13 @@ export const consumeAiQuota = async (userId) => {
   if (limit === 0) return
 
   const sameDay = await User.updateOne(
-    { _id: userId, 'aiUsage.day': today, 'aiUsage.chunks': { $lt: limit } },
+    { _id: userId, 'aiUsage.day': today, 'aiUsage.chunks': mongoose.trusted({ $lt: limit }) },
     { $inc: { 'aiUsage.chunks': 1 } },
   )
   if (sameDay.modifiedCount === 1) return
 
   const newDay = await User.updateOne(
-    { _id: userId, 'aiUsage.day': { $ne: today } },
+    { _id: userId, 'aiUsage.day': mongoose.trusted({ $ne: today }) },
     { $set: { 'aiUsage.day': today, 'aiUsage.chunks': 1 } },
   )
   if (newDay.modifiedCount === 1) return

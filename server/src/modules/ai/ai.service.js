@@ -1,5 +1,8 @@
+import mongoose from 'mongoose'
+
 import { EXAMPLES_PER_ITEM, MAX_ITEMS_PER_LINE } from '../../config/constants.js'
 import { env } from '../../config/env.js'
+import { createLimiter, createSingleFlight } from '../../utils/concurrency.js'
 import { hashOf } from '../../utils/hash.js'
 import { logger } from '../../utils/logger.js'
 import {
@@ -64,8 +67,16 @@ const sanitizeExamples = (examples) =>
  * @param {Function} deps.consumeQuota - `(userId) => Promise<void>`, throws when exhausted
  * @param {() => boolean} deps.isEnabled - whether AI calls are allowed
  * @param {string} [deps.model]
+ * @param {number} [deps.maxConcurrent] - max simultaneous model calls in this process
  */
-export const createAnalysisService = ({ complete, cacheStore, lexiconStore, consumeQuota, isEnabled, model = '' }) => {
+export const createAnalysisService = ({ complete: rawComplete, cacheStore, lexiconStore, consumeQuota, isEnabled, model = '', maxConcurrent = 16 }) => {
+  // Bound simultaneous model calls, and make identical concurrent work (e.g. many viewers of the
+  // same new video) share a single call instead of paying for it N times.
+  const modelLimiter = createLimiter({ concurrency: maxConcurrent, maxQueue: 500, name: 'AI' })
+  const complete = (request) => modelLimiter.run(() => rawComplete(request))
+  const analysisFlight = createSingleFlight()
+  const examplesFlight = createSingleFlight()
+
   const generateExamples = async ({ sourceLang, nativeLang, items }) => {
     const system = buildExamplesSystemPrompt({ sourceLang, nativeLang })
     const generated = []
@@ -94,8 +105,12 @@ export const createAnalysisService = ({ complete, cacheStore, lexiconStore, cons
 
     if (missing.length && allowGenerate) {
       try {
-        const generated = await generateExamples({ sourceLang, nativeLang, items: missing })
-        if (generated.length) await lexiconStore.upsertMany(sourceLang, nativeLang, generated)
+        const flightKey = `${sourceLang}:${nativeLang}:${missing.map((item) => item.lemma).sort().join('|')}`
+        const generated = await examplesFlight(flightKey, async () => {
+          const entries = await generateExamples({ sourceLang, nativeLang, items: missing })
+          if (entries.length) await lexiconStore.upsertMany(sourceLang, nativeLang, entries)
+          return entries
+        })
         generated.forEach((entry) => known.set(entry.lemma, entry))
       } catch (err) {
         logger.warn('[ai] Example generation failed; returning items without examples:', err.message)
@@ -133,19 +148,22 @@ export const createAnalysisService = ({ complete, cacheStore, lexiconStore, cons
       return { cached: true, lines: await attachExamples({ sourceLang, nativeLang, lines: remapped, allowGenerate: isEnabled() }) }
     }
 
-    await consumeQuota(userId)
-
-    const payload = lines.map(({ i, text, translation }) => (needTranslation || !translation ? { i, text } : { i, text, translation }))
-    const { data } = await complete({
-      system: buildAnalysisSystemPrompt({ sourceLang, nativeLang, needTranslation }),
-      user: JSON.stringify({ lines: payload }),
-      schema: ANALYSIS_SCHEMA,
+    // Only the request that actually triggers the model call spends the caller's daily quota.
+    const analyzed = await analysisFlight(`${key}:${needTranslation ? 1 : 0}`, async () => {
+      await consumeQuota(userId)
+      const payload = lines.map(({ i, text, translation }) => (needTranslation || !translation ? { i, text } : { i, text, translation }))
+      const { data } = await complete({
+        system: buildAnalysisSystemPrompt({ sourceLang, nativeLang, needTranslation }),
+        user: JSON.stringify({ lines: payload }),
+        schema: ANALYSIS_SCHEMA,
+      })
+      const result = sanitizeAnalysis(data, lines)
+      await cacheStore.save({ key, videoId, sourceLang, nativeLang, hasTranslations: needTranslation, lines: result, model })
+      return result
     })
-    const analyzed = sanitizeAnalysis(data, lines)
 
-    await cacheStore.save({ key, videoId, sourceLang, nativeLang, hasTranslations: needTranslation, lines: analyzed, model })
-
-    return { cached: false, lines: await attachExamples({ sourceLang, nativeLang, lines: analyzed, allowGenerate: true }) }
+    const remapped = lines.map((line, position) => ({ ...analyzed[position], i: line.i }))
+    return { cached: false, lines: await attachExamples({ sourceLang, nativeLang, lines: remapped, allowGenerate: true }) }
   }
 
   return { analyzeChunk }
@@ -159,7 +177,7 @@ const mongoCacheStore = {
 
 const mongoLexiconStore = {
   findMany: async (lang, nativeLang, lemmas) => {
-    const entries = await Lexicon.find({ lang, nativeLang, lemma: { $in: lemmas } }).lean()
+    const entries = await Lexicon.find({ lang, nativeLang, lemma: mongoose.trusted({ $in: lemmas }) }).lean()
     return new Map(entries.map((entry) => [entry.lemma, entry]))
   },
   upsertMany: (lang, nativeLang, entries) =>
@@ -174,6 +192,9 @@ const mongoLexiconStore = {
     ),
 }
 
+/** MongoDB-backed stores (exported for integration tests). */
+export const mongoStores = { cacheStore: mongoCacheStore, lexiconStore: mongoLexiconStore }
+
 /** Production instance wired to MongoDB and Claude. */
 export const analysisService = createAnalysisService({
   complete: createJsonCompletion,
@@ -182,4 +203,5 @@ export const analysisService = createAnalysisService({
   consumeQuota: consumeAiQuota,
   isEnabled: () => env.isAiEnabled,
   model: env.AI_MODEL,
+  maxConcurrent: env.AI_MAX_CONCURRENT_REQUESTS,
 })

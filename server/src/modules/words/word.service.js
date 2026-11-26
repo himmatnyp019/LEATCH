@@ -1,3 +1,5 @@
+import mongoose from 'mongoose'
+
 import { ApiError } from '../../utils/ApiError.js'
 import Word from './word.model.js'
 
@@ -14,7 +16,7 @@ export const listWords = async (userId, { lang, status, q, page, limit }) => {
   if (lang) filter.lang = lang
   if (status) filter.status = status
   if (q) {
-    const pattern = { $regex: escapeRegex(q), $options: 'i' }
+    const pattern = mongoose.trusted({ $regex: escapeRegex(q), $options: 'i' })
     filter.$or = [{ lemma: pattern }, { meaning: pattern }, { surface: pattern }]
   }
 

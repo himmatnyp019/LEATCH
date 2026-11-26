@@ -1,12 +1,16 @@
+import mongoose from 'mongoose'
+
 import { ApiError } from '../../utils/ApiError.js'
 import Video from './video.model.js'
+
+const LIST_PROJECTION = '-cues -vocab -notes -__v'
 
 const COMPLETED_THRESHOLD = 0.95
 
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-const buildProgress = ({ position, duration }, previous = {}) => {
-  const total = duration || previous.duration || 0
+const buildProgress = ({ position, duration }, previous = {}, lessonDuration = 0) => {
+  const total = duration || previous.duration || lessonDuration || 0
   const percent = total > 0 ? Math.min(1, position / total) : 0
   return {
     position,
@@ -45,25 +49,17 @@ const findOwnedVideo = async (userId, videoId) => {
  * @param {{ page: number, limit: number, q?: string }} options
  */
 export const listVideos = async (userId, { page, limit, q }) => {
-  const match = { user: userId }
-  if (q) match.title = { $regex: escapeRegex(q), $options: 'i' }
+  const filter = { user: userId }
+  if (q) filter.title = mongoose.trusted({ $regex: escapeRegex(q), $options: 'i' })
 
   const [items, total] = await Promise.all([
-    Video.aggregate([
-      { $match: match },
-      { $sort: { 'progress.lastWatchedAt': -1, updatedAt: -1 } },
-      { $skip: (page - 1) * limit },
-      { $limit: limit },
-      {
-        $addFields: {
-          cueCount: { $size: { $ifNull: ['$cues', []] } },
-          vocabCount: { $size: { $ifNull: ['$vocab', []] } },
-          noteCount: { $size: { $ifNull: ['$notes', []] } },
-        },
-      },
-      { $project: { cues: 0, vocab: 0, notes: 0, __v: 0 } },
-    ]),
-    Video.countDocuments(match),
+    Video.find(filter)
+      .select(LIST_PROJECTION)
+      .sort({ 'progress.lastWatchedAt': -1, updatedAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    Video.countDocuments(filter),
   ])
 
   return { items, pagination: { page, limit, total, pages: Math.ceil(total / limit), hasNext: page * limit < total } }
@@ -88,7 +84,7 @@ export const upsertVideo = async (userId, videoId, data) => {
   if (!video.url) video.url = `https://www.youtube.com/watch?v=${videoId}`
   if (cues) video.cues = mergeCues(existing?.cues, cues)
   if (vocab) video.vocab = mergeVocab(existing?.vocab?.map((item) => item.toObject()), vocab)
-  if (progress) video.progress = buildProgress(progress, existing?.progress)
+  if (progress) video.progress = buildProgress(progress, existing?.progress, video.durationSec)
 
   await video.save()
   return { video, created: !existing }
@@ -97,7 +93,7 @@ export const upsertVideo = async (userId, videoId, data) => {
 /** Updates playback progress of a saved lesson. */
 export const updateProgress = async (userId, videoId, progress) => {
   const video = await findOwnedVideo(userId, videoId)
-  video.progress = buildProgress(progress, video.progress)
+  video.progress = buildProgress(progress, video.progress, video.durationSec)
   await video.save()
   return video.progress
 }

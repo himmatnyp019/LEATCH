@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  server:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports: ["27017:27017"]
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+      - name: Install Redis (for the shared rate-limit tests)
+        run: sudo apt-get update && sudo apt-get install -y redis-server
+      - run: npm ci
+      - name: Security audit (production dependencies)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Tests (unit, HTTP, rate limiting, MongoDB integration)
+        run: npm test
+        env:
+          MONGODB_TEST_URI: mongodb://127.0.0.1:27017/?directConnection=true
+      - name: Docker image builds
+        run: docker build -t leatch-api:ci .
+
+  extension:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: extension
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test

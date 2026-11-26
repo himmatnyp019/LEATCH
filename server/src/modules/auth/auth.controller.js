@@ -20,3 +20,13 @@ export const updateMe = asyncHandler(async (req, res) => {
   const user = await AuthService.updateProfile(req.user, req.body)
   res.json(new ApiResponse(200, user, 'Profile updated'))
 })
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const session = await AuthService.changePassword(req.user._id, req.body)
+  res.json(new ApiResponse(200, session, 'Password changed — other devices were logged out'))
+})
+
+export const logoutAll = asyncHandler(async (req, res) => {
+  await AuthService.logoutEverywhere(req.user._id)
+  res.json(new ApiResponse(200, null, 'Logged out on all devices'))
+})

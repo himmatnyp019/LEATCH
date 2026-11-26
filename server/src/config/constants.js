@@ -12,6 +12,10 @@ export const MAX_LINE_LENGTH = 400
 export const MAX_ITEMS_PER_LINE = 2
 export const EXAMPLES_PER_ITEM = 2
 export const MAX_CUES_PER_VIDEO = 6000
-export const BCRYPT_ROUNDS = 12
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE = 100
+
+/** Body size for ordinary JSON requests. */
+export const DEFAULT_BODY_LIMIT = '100kb'
+/** Body size for saving a whole lesson (full subtitles + vocab). */
+export const LESSON_BODY_LIMIT = '5mb'

@@ -39,5 +39,6 @@ const wordSchema = new Schema(
 
 wordSchema.index({ user: 1, lang: 1, lemma: 1 }, { unique: true })
 wordSchema.index({ user: 1, createdAt: -1 })
+wordSchema.index({ user: 1, status: 1, createdAt: -1 })
 
 export default mongoose.model('Word', wordSchema)

@@ -16,7 +16,8 @@ and the reverse.
 
 ## Quick start
 
-Requirements: Node.js 22+, MongoDB (local or Atlas), Chrome/Edge/Brave.
+Requirements: Node.js 22+, MongoDB Atlas (or any MongoDB 6+), Chrome/Edge/Brave.
+Production deployment, security layers and scaling are covered in [`server/README.md`](server/README.md).
 
 ### 1. Backend
 
@@ -28,8 +29,9 @@ cd server
 cp .env.example .env
 ```
 
-Edit `.env`: set `MONGODB_URI`, and a long random `JWT_SECRET`
-(`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`).
+Edit `.env` (or set real environment variables): `MONGODB_URI` (your Atlas connection string;
+`MONGODB_USERNAME`/`MONGODB_PASSWORD` and `MONGODB_DB_NAME` are also supported) and a long random
+`JWT_SECRET` (`node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`).
 Optionally set `ANTHROPIC_API_KEY` to enable AI-picked key words (see [AI & tokens](#ai--tokens)).
 
 ```bash
@@ -37,10 +39,18 @@ npm install
 ```
 
 ```bash
+npm run db:check
+```
+
+`db:check` verifies the Atlas connection (and tells you what to fix, e.g. Atlas Network Access).
+
+```bash
 npm run dev
 ```
 
-The API listens on `http://localhost:4000` (`GET /api/health` to check).
+The API listens on `http://localhost:4000` (`GET /api/health` to check). For production use
+`npm run start:cluster` or `docker compose up -d --build` (nginx + replicas + Redis).
+See [`server/README.md`](server/README.md).
 
 ### 2. Extension
 
@@ -117,9 +127,11 @@ All endpoints are under `/api`. Authenticated ones need `Authorization: Bearer <
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| GET | `/health` | status, whether AI is enabled |
+| GET | `/health` · `/health/ready` | liveness (+ whether AI is enabled) · readiness (database reachable) |
 | POST | `/auth/register` · `/auth/login` | `{ email, password, name? }` → `{ user, token }` |
 | GET / PATCH | `/auth/me` | profile, language preferences |
+| POST | `/auth/password` | `{ currentPassword, newPassword }`, logs out other devices |
+| POST | `/auth/logout-all` | revokes every token for the account |
 | GET | `/videos?q=&page=` | saved lessons (without the heavy arrays) |
 | GET / PUT / DELETE | `/videos/:videoId` | full lesson / create-or-update (vocab merged, notes kept) / delete |
 | PATCH | `/videos/:videoId/progress` | `{ position, duration }` |
@@ -138,12 +150,21 @@ All endpoints are under `/api`. Authenticated ones need `Authorization: Bearer <
 cd server && npm test
 ```
 
-Unit tests for the AI service (caching, lexicon reuse, quota), plus routing/validation/auth guards.
-To also run the MongoDB integration suite, point it at a throwaway database:
+Unit tests (AI caching/dedupe, password hashing, tokens, guards, load shedding), HTTP tests
+(validation, injection, body limits, CORS), and rate limiting, both in-memory and shared through a
+local `redis-server`. To also run the MongoDB integration suite, use a throwaway database
+(it drops `leatch-test` and refuses Atlas URIs):
 
 ```bash
-MONGODB_TEST_URI=mongodb://127.0.0.1:27017/leatch-test npm test
+docker run -d -p 27017:27017 mongo:7
 ```
+
+```bash
+MONGODB_TEST_URI=mongodb://127.0.0.1:27017 npm test
+```
+
+CI (`.github/workflows/ci.yml`) runs all of this, `npm audit`, the Docker build and the extension
+tests on every push.
 
 ```bash
 cd extension && npm test
@@ -173,7 +194,10 @@ extension/   Chrome MV3 extension (plain JS, no build step)
   popup/ options/ library/ pages/   extension pages
   tests/            unit + e2e tests
 server/      Node.js + Express + MongoDB (Mongoose) API
-  src/modules/{auth,videos,words,ai}   route → controller → service → model
+  src/modules/{auth,videos,words,ai,health}   route → controller → service → model
+  src/config/  env validation, MongoDB + Redis connections
+  src/middleware/  auth, rate limits, load shedding, guards, errors
+  Dockerfile, docker-compose.yml, deploy/nginx.conf   production stack
 ```
 
 ## Known limitations / next steps
